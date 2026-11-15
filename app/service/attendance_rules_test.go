@@ -50,3 +50,23 @@ func TestBlockedUntil(t *testing.T) {
 		t.Errorf("blokir sampai %v, seharusnya %v", got, want)
 	}
 }
+
+func TestIsLateCheckout(t *testing.T) {
+	end := time.Date(2026, 11, 20, 12, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name string
+		now  time.Time
+		want bool
+	}{
+		{"sebelum jam selesai", end.Add(-10 * time.Minute), false},
+		{"tepat 15 menit sesudah", end.Add(15 * time.Minute), false},
+		{"16 menit sesudah", end.Add(16 * time.Minute), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsLateCheckout(end, tt.now); got != tt.want {
+				t.Errorf("IsLateCheckout() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
