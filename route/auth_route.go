@@ -11,6 +11,7 @@ import (
 func RegisterAuthRoutes(api *gin.RouterGroup, db *gorm.DB) {
 	repo := repository.NewUserRepository(db)
 	authH := NewAuthHandler(service.NewAuthService(repo))
+	userH := NewUserHandler(service.NewUserService(repo))
 
 	api.POST("/auth/register", authH.Register)
 	api.POST("/auth/login", authH.Login)
