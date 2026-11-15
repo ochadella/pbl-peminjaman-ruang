@@ -31,6 +31,15 @@ type Booking struct {
 }
 
 // CheckInRequest adalah body untuk POST /attendance/check-in.
+// CreateBookingRequest adalah body untuk POST /bookings.
+type CreateBookingRequest struct {
+	RoomID           int64     `json:"room_id"`
+	StartAt          time.Time `json:"start_at"`
+	EndAt            time.Time `json:"end_at"`
+	Purpose          string    `json:"purpose"`
+	ParticipantCount int       `json:"participant_count"`
+}
+
 // CheckinCode adalah kode yang didapat dari hasil scan barcode.
 type CheckInRequest struct {
 	CheckinCode string `json:"checkin_code"`
