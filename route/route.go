@@ -14,14 +14,17 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool, jwtSecret string) {
 	userRepo := repository.NewUserRepository(db)
 	roomRepo := repository.NewRoomRepository(db)
 	hourRepo := repository.NewOperatingHourRepository(db)
+	violationRepo := repository.NewViolationRepository(db)
 
 	authService := service.NewAuthService(userRepo, jwtSecret)
 	userService := service.NewUserService(userRepo)
 	roomService := service.NewRoomService(roomRepo)
 	hourService := service.NewOperatingHourService(hourRepo)
+	violationService := service.NewViolationService(violationRepo, userRepo)
 
 	auth := middleware.Auth(jwtSecret)
 	adminOnly := middleware.RequireRole(model.RoleAdmin)
+	staffOnly := middleware.RequireRole(model.RolePetugas, model.RoleAdmin)
 
 	api := app.Group("/api/v1")
 
@@ -50,4 +53,9 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool, jwtSecret string) {
 	hours := api.Group("/operating-hours")
 	hours.Get("/", hourService.List)
 	hours.Put("/:day", auth, adminOnly, hourService.Update)
+
+	violations := api.Group("/violations", auth)
+	violations.Get("/me", violationService.ListMine)
+	violations.Get("/user/:id", staffOnly, violationService.ListByUser)
+	violations.Post("/", staffOnly, violationService.Create)
 }
