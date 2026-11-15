@@ -26,6 +26,13 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool, jwtSecret string) {
 	hourService := service.NewOperatingHourService(hourRepo)
 	violationService := service.NewViolationService(violationRepo, userRepo)
 	attendanceService := service.NewAttendanceService(bookingRepo, roomRepo, hourRepo, violationRepo)
+	bookingService := service.NewBookingService(
+		db,
+		bookingRepo,
+		userRepo,
+		roomRepo,
+		hourRepo,
+	)
 
 	// Cek no-show otomatis setiap 1 menit di background.
 	attendanceService.StartNoShowWorker(context.Background(), time.Minute)
@@ -33,6 +40,7 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool, jwtSecret string) {
 	auth := middleware.Auth(jwtSecret)
 	adminOnly := middleware.RequireRole(model.RoleAdmin)
 	staffOnly := middleware.RequireRole(model.RolePetugas, model.RoleAdmin)
+	studentOnly := middleware.RequireRole(model.RoleMahasiswa)
 
 	api := app.Group("/api/v1")
 
@@ -72,4 +80,8 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool, jwtSecret string) {
 	attendance.Post("/check-in", attendanceService.CheckIn)
 	attendance.Post("/process-no-show", staffOnly, attendanceService.RunNoShow)
 	attendance.Post("/:id/check-out", attendanceService.CheckOut)
+	bookings := api.Group("/bookings", auth, studentOnly)
+	bookings.Post("/", bookingService.CreateBooking)
+	bookings.Get("/me", bookingService.ListMine)
+	bookings.Patch("/:id/cancel", bookingService.CancelMine)
 }
