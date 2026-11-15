@@ -5,7 +5,7 @@ INSERT INTO users (nim_nip, name, email, password_hash, role) VALUES
      '$2b$10$Pt1peVERwjLuZrZT8qKP0uQ2FqG/MrqZFgTCysVtD6un8ErrsJYja', 'petugas'),
     ('230000001', 'Syanda Putri', 'mahasiswa@unair.test',
      '$2b$10$KlnPsfmLSwTAOCbEzTNk6uYqw7DrW5yO9Fdhyp2fYZt1bdpMd/aCm', 'mahasiswa')
-ON CONFLICT DO NOTHING
+ON CONFLICT DO NOTHING;
 
 INSERT INTO rooms (code, name, location, capacity, facilities) VALUES
     ('PARTANA-1', 'Partana 1', 'Ruang Partana Lantai 3, Perpustakaan UNAIR Kampus B', 8,
