@@ -1,6 +1,9 @@
 package route
 
 import (
+	"context"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -15,12 +18,17 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool, jwtSecret string) {
 	roomRepo := repository.NewRoomRepository(db)
 	hourRepo := repository.NewOperatingHourRepository(db)
 	violationRepo := repository.NewViolationRepository(db)
+	bookingRepo := repository.NewBookingRepository(db)
 
 	authService := service.NewAuthService(userRepo, jwtSecret)
 	userService := service.NewUserService(userRepo)
 	roomService := service.NewRoomService(roomRepo)
 	hourService := service.NewOperatingHourService(hourRepo)
 	violationService := service.NewViolationService(violationRepo, userRepo)
+	attendanceService := service.NewAttendanceService(bookingRepo, roomRepo, hourRepo, violationRepo)
+
+	// Cek no-show otomatis setiap 1 menit di background.
+	attendanceService.StartNoShowWorker(context.Background(), time.Minute)
 
 	auth := middleware.Auth(jwtSecret)
 	adminOnly := middleware.RequireRole(model.RoleAdmin)
@@ -47,6 +55,7 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool, jwtSecret string) {
 	rooms := api.Group("/rooms", auth)
 	rooms.Get("/", roomService.List)
 	rooms.Get("/:id", roomService.Get)
+	rooms.Get("/:id/availability", attendanceService.Availability)
 	rooms.Post("/", adminOnly, roomService.Create)
 	rooms.Patch("/:id", adminOnly, roomService.Update)
 
@@ -58,4 +67,9 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool, jwtSecret string) {
 	violations.Get("/me", violationService.ListMine)
 	violations.Get("/user/:id", staffOnly, violationService.ListByUser)
 	violations.Post("/", staffOnly, violationService.Create)
+
+	attendance := api.Group("/attendance", auth)
+	attendance.Post("/check-in", attendanceService.CheckIn)
+	attendance.Post("/process-no-show", staffOnly, attendanceService.RunNoShow)
+	attendance.Post("/:id/check-out", attendanceService.CheckOut)
 }
