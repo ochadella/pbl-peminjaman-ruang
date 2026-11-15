@@ -31,3 +31,12 @@ func BlockedUntil(violationCount int, now time.Time) *time.Time {
 	until := now.AddDate(0, 0, model.BlockDurationDay)
 	return &until
 }
+
+// LateCheckoutTolerance adalah batas toleransi check-out setelah jam selesai.
+const LateCheckoutTolerance = 15 * time.Minute
+
+// IsLateCheckout bernilai true bila check-out dilakukan lebih dari
+// 15 menit setelah jam selesai booking.
+func IsLateCheckout(endAt, now time.Time) bool {
+	return now.After(endAt.Add(LateCheckoutTolerance))
+}
